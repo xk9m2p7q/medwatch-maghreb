@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedWatch Maghreb — Western Mediterranean Intelligence Monitor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#16202e;--bg2:#1a2840;--bg3:#131a26;
+  --text:#ddeaf5;--text2:#8aabb8;--text3:#5a7a8a;
+  --border:#1e3248;--border2:#264060;
+  --accent:#4a88b8;--accent-bg:#1a3a56;--accent-text:#7dbfe8;
+  --blue-bg:#1a3a56;--blue-text:#7dbfe8;
+  --green-bg:#132b1e;--green-text:#6bb888;
+  --amber-bg:#2e2210;--amber-text:#c49850;
+  --red-bg:#2e1010;--red-text:#d08080;
+  --red-dot:#c45050;--amber-dot:#c4862a;--green-dot:#4a8a28;
+  --radius:7px;--radius-lg:11px;
+  --font:'Georgia',serif;--font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+body{font-family:var(--font-ui);background:var(--bg3);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6}
+.page{max-width:860px;margin:0 auto;padding:2rem 1.25rem}
+
+.brand-title{font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.3px}
+.brand-sub{font-size:12px;color:var(--text3);margin-top:3px}
+.brand-tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:0.08em;background:var(--blue-bg);color:var(--blue-text);padding:2px 8px;border-radius:4px;margin-top:5px;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lang-toggle{display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden}
+.lang-btn{padding:5px 14px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;border:none;color:var(--text2);font-family:var(--font)}
+.lang-btn.active{background:var(--bg2);color:var(--text)}
+.last-updated{font-size:11px;color:var(--text3)}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:1.5rem}
+@media(max-width:600px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.metric{background:var(--bg2);border-radius:var(--radius);padding:12px 14px;border:1px solid var(--border)}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:4px}
+.metric-val{font-size:22px;font-weight:600;color:var(--text)}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.filters{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
+.filter-label{font-size:11px;color:var(--text2);white-space:nowrap}
+select{font-size:12px;padding:5px 10px;border-radius:var(--radius);background:var(--bg);color:var(--text);border:1px solid var(--border2);font-family:var(--font);cursor:pointer}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.feed{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s}
+.card:hover{border-color:var(--border2)}
+.card.expanded{border-color:var(--accent)}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.card-left{flex:1;min-width:0}
+.card-title{font-size:14px;font-weight:600;color:var(--text);line-height:1.45;margin-bottom:8px;font-family:var(--font)}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
+.tag{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;white-space:nowrap}
+.tag-country{background:var(--blue-bg);color:var(--blue-text)}
+.tag-theme{background:var(--green-bg);color:var(--green-text)}
+.tag-signal{background:var(--amber-bg);color:var(--amber-text)}
+.tag-high{background:var(--red-bg);color:var(--red-text)}
+.card-meta{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.signal-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-high{background:var(--red-dot)}
+.dot-med{background:var(--amber-dot)}
+.dot-low{background:var(--green-dot)}
+.card-summary{font-size:13px;color:var(--text2);line-height:1.65;margin-top:10px}
+.expand-btn{font-size:11px;color:var(--text3);white-space:nowrap;padding:3px 0;background:none;border:none;cursor:pointer;font-family:var(--font);flex-shrink:0}
+.expand-btn:hover{color:var(--text)}
+.analysis-panel{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.analysis-loading{font-size:13px;color:var(--text3);font-style:italic}
+.a-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:0}
+@media(max-width:560px){.a-grid{grid-template-columns:1fr}}
+.a-block{border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;background:var(--bg2)}
+.a-block-wide{grid-column:1/-1}
+.a-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.a-text{font-size:13px;color:var(--text);line-height:1.6;font-family:var(--font-ui)}
+.no-api-notice{background:var(--amber-bg);border:1px solid var(--amber-text);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--amber-text);margin-top:12px;line-height:1.5}
+.input-section{margin-top:2rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.input-section-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+.input-section-sub{font-size:12px;color:var(--text3);margin-bottom:12px}
+textarea{width:100%;font-size:13px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--text);resize:vertical;min-height:90px;font-family:var(--font);line-height:1.5}
+textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{font-size:13px;padding:7px 16px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--text);cursor:pointer;font-family:var(--font);transition:background 0.1s}
+.btn:hover{background:var(--bg3)}
+.btn.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.btn-primary:hover{opacity:0.9}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.custom-result{margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.empty-state{font-size:13px;color:var(--text3);padding:1.5rem 0;text-align:center}
+.footer{margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:11px;color:var(--text3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.footer a{color:var(--text3);text-decoration:none}
+.footer a:hover{color:var(--text)}
+.hero{margin-bottom:1.75rem;padding-bottom:1.75rem;border-bottom:1px solid var(--border)}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem}
+.brand-title{font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.4px;font-family:var(--font)}
+.brand-sub{font-size:12px;color:var(--text3);margin-top:4px;letter-spacing:0.04em;text-transform:uppercase}
+.brand-tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:0.08em;background:var(--blue-bg);color:var(--blue-text);padding:2px 8px;border-radius:4px;margin-top:6px;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hero-desc{display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:start}
+@media(max-width:580px){.hero-desc{grid-template-columns:1fr}}
+.hero-text{font-size:13.5px;color:var(--text2);line-height:1.75;font-family:var(--font)}
+.hero-text strong{color:var(--text);font-weight:600}
+.hero-pills{display:flex;flex-direction:column;gap:7px;flex-shrink:0}
+.pill{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);white-space:nowrap}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="brand-title" id="brand-title">Western Mediterranean Monitor</div>
+        <div class="brand-sub" id="brand-sub">Strategic intelligence — Maghreb & Western Mediterranean</div>
+        <div class="brand-tag" id="brand-tag">Prototype · v0.1</div>
+      </div>
+      <div class="topbar-right">
+        <span class="last-updated" id="last-updated">Updated: May 2026</span>
+        <div class="lang-toggle">
+          <button class="lang-btn active" onclick="setLang('en')">EN</button>
+          <button class="lang-btn" onclick="setLang('es')">ES</button>
+        </div>
+      </div>
+    </div>
+    <div class="hero-desc">
+      <div class="hero-text" id="hero-text">MedWatch Maghreb tracks <strong>political, security, and energy developments</strong> across Morocco, Algeria, Tunisia, Mauritania, and the broader Sahel — with a focus on their implications for Spain and the Western Mediterranean. Items are curated from Arabic, French, Spanish, and English sources, structured by theme and priority, and assessed through <strong>on-demand AI analysis</strong> covering strategic significance, key actors, 30-day watch items, and the Spain angle.</div>
+      <div class="hero-pills">
+        <div class="pill"><span class="pill-dot"></span><span data-en="5 countries monitored" data-es="5 países monitorizados">5 countries monitored</span></div>
+        <div class="pill"><span class="pill-dot"></span><span data-en="24 sources · 4 languages" data-es="24 fuentes · 4 idiomas">24 sources · 4 languages</span></div>
+        <div class="pill"><span class="pill-dot"></span><span data-en="AI-assisted · human-curated" data-es="Asistido por IA · curación humana">AI-assisted · human-curated</span></div>
+        <div class="pill"><span class="pill-dot"></span><span data-en="Bilingual EN / ES" data-es="Bilingüe EN / ES">Bilingual EN / ES</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label" data-en="Items this week" data-es="Ítems esta semana">Items this week</div>
+      <div class="metric-val" id="m-items">9</div>
+      <div class="metric-sub" data-en="across 5 countries" data-es="en 5 países">across 5 countries</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label" data-en="High-priority signals" data-es="Señales alta prioridad">High-priority signals</div>
+      <div class="metric-val" style="color:var(--red-dot)" id="m-high">3</div>
+      <div class="metric-sub" data-en="require analyst review" data-es="requieren revisión">require analyst review</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label" data-en="Top theme" data-es="Tema principal">Top theme</div>
+      <div class="metric-val" style="font-size:15px;padding-top:5px" data-en="Security" data-es="Seguridad" id="m-theme">Security</div>
+      <div class="metric-sub" id="m-theme-count">4 items</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label" data-en="Sources monitored" data-es="Fuentes monitorizadas">Sources monitored</div>
+      <div class="metric-val">24</div>
+      <div class="metric-sub">ES · FR · AR · EN</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <span class="filter-label" data-en="Country" data-es="País">Country</span>
+    <select id="f-country" onchange="renderFeed()">
+      <option value="all">All</option>
+      <option value="Morocco">Morocco</option>
+      <option value="Algeria">Algeria</option>
+      <option value="Tunisia">Tunisia</option>
+      <option value="Mauritania">Mauritania</option>
+      <option value="Sahel">Sahel</option>
+      <option value="Spain">Spain</option>
+    </select>
+    <div class="filter-sep"></div>
+    <span class="filter-label" data-en="Theme" data-es="Tema">Theme</span>
+    <select id="f-theme" onchange="renderFeed()">
+      <option value="all">All</option>
+      <option value="Security">Security</option>
+      <option value="Energy">Energy</option>
+      <option value="Migration">Migration</option>
+      <option value="Sovereignty">Sovereignty</option>
+      <option value="Diplomacy">Diplomacy</option>
+      <option value="Politics">Politics</option>
+    </select>
+    <div class="filter-sep"></div>
+    <span class="filter-label" data-en="Priority" data-es="Prioridad">Priority</span>
+    <select id="f-priority" onchange="renderFeed()">
+      <option value="all">All</option>
+      <option value="high" data-en="High" data-es="Alta">High</option>
+      <option value="medium" data-en="Medium" data-es="Media">Medium</option>
+      <option value="low" data-en="Low" data-es="Baja">Low</option>
+    </select>
+  </div>
+
+  <div class="feed" id="feed"></div>
+
+  <div class="input-section">
+    <div class="input-section-title" id="input-title">Analyze a new item</div>
+    <div class="input-section-sub" id="input-sub">Paste any news item, statement, or development — the system will structure and assess it.</div>
+    <textarea id="custom-input" placeholder="Paste text here..."></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="analyzeCustom()" id="analyze-btn">Run analysis</button>
+      <button class="btn" onclick="clearCustom()" id="clear-btn">Clear</button>
+    </div>
+    <div class="custom-result" id="custom-result" style="display:none"></div>
+  </div>
+
+  <div class="footer">
+    <span>MedWatch Maghreb · Samuel Herize · IE Madrid / Universidad de Navarra</span>
+    <span id="footer-right">AI-assisted · human-curated · <a href="mailto:samuel.herize@alumni.unav.es">Contact</a></span>
+  </div>
+
+</div>
+<script>
+const ITEMS=[
+  {id:1,date:"2026-04-28",country:"Algeria",theme:"Energy",priority:"high",signal:"Strategic positioning",title_en:"Algeria relaunches Trans-Saharan Gas Pipeline negotiations with Nigeria amid Sahel instability",title_es:"Argelia relanza las negociaciones del Gasoducto Transahariano con Nigeria en medio de la inestabilidad en el Sahel",summary_en:"Algiers has resumed formal talks with Abuja on the TSGP project after a two-year pause, framing it as a continental energy corridor rather than a bilateral deal — a direct counter to Morocco's Atlantic pipeline initiative with Nigeria.",summary_es:"Argel ha retomado negociaciones formales con Abuja sobre el TSGP tras una pausa de dos años, presentándolo como un corredor energético continental — una respuesta directa a la iniciativa del gasoducto atlántico marroquí.",source:"Jeune Afrique / Echorouk"},
+  {id:2,date:"2026-04-25",country:"Morocco",theme:"Security",priority:"high",signal:"Military signaling",title_en:"Morocco expands Dakhla military base with new naval infrastructure, drawing Polisario response",title_es:"Marruecos amplía la base militar de Dakhla con nueva infraestructura naval, generando respuesta del Polisario",summary_en:"Royal Armed Forces announced a significant expansion of the Dakhla naval facility, including drone deployment capacity. The Polisario Front issued a formal protest citing violation of the 1991 ceasefire framework.",summary_es:"Las FAR anunciaron una expansión significativa de la instalación naval de Dakhla, incluyendo capacidad de despliegue de drones. El Frente Polisario emitió una protesta formal citando violación del marco de alto el fuego de 1991.",source:"Hespress / MINURSO"},
+  {id:3,date:"2026-04-24",country:"Spain",theme:"Diplomacy",priority:"high",signal:"Structural dilemma",title_en:"Spain quietly abstains on EU motion linking Morocco trade preferences to Western Sahara compliance",title_es:"España se abstiene en silencio en moción de la UE que vincula preferencias comerciales con Marruecos al cumplimiento en el Sáhara",summary_en:"Madrid's abstention — not reported by Spanish state media — signals continued unwillingness to risk the 2022 roadmap with Rabat despite growing European Parliament pressure over fishing rights and sovereignty status.",summary_es:"La abstención de Madrid — no reportada por medios estatales españoles — señala la continua falta de voluntad de arriesgar la hoja de ruta de 2022 con Rabat a pesar de la creciente presión del Parlamento Europeo.",source:"Euractiv / El Confidencial"},
+  {id:4,date:"2026-04-22",country:"Sahel",theme:"Security",priority:"medium",signal:"Regional spillover",title_en:"JNIM extends operational presence into southern Mauritania, complicating Morocco's Atlantic corridor logic",title_es:"JNIM extiende presencia operacional al sur de Mauritania, complicando la lógica del corredor atlántico marroquí",summary_en:"Jihadist group JNIM conducted three coordinated attacks near Mauritania's border with Mali, the furthest north recorded. This directly threatens the security assumptions underlying Morocco's Sahel access strategy.",summary_es:"El grupo yihadista JNIM realizó tres ataques coordinados cerca de la frontera de Mauritania con Mali, los más al norte registrados. Esto amenaza directamente los supuestos de seguridad de la estrategia de acceso al Sahel de Marruecos.",source:"Africa Report / RFI"},
+  {id:5,date:"2026-04-20",country:"Algeria",theme:"Politics",priority:"medium",signal:"Elite statement",title_en:"Tebboune signals openness to partial Hirak amnesty ahead of June presidential consultations",title_es:"Tebboune señala apertura a una amnistía parcial del Hirak antes de las consultas presidenciales de junio",summary_en:"In an interview with Echorouk, President Tebboune suggested a possible release of political detainees held since the 2019 Hirak movement — widely read as a domestic pressure valve ahead of scheduled political consultations.",summary_es:"En una entrevista con Echorouk, el presidente Tebboune sugirió una posible liberación de presos políticos detenidos desde el movimiento Hirak de 2019 — ampliamente interpretado como una válvula de presión doméstica.",source:"Echorouk (Arabic)"},
+  {id:6,date:"2026-04-18",country:"Mauritania",theme:"Migration",priority:"medium",signal:"Policy shift",title_en:"Mauritania requests renegotiation of EU migration deal terms, citing sovereignty concerns",title_es:"Mauritania solicita renegociación de los términos del acuerdo migratorio con la UE, citando preocupaciones de soberanía",summary_en:"Nouakchott has formally requested a review of the 2024 EU migration cooperation framework, signaling discomfort with the surveillance infrastructure component and its implications for Mauritanian sovereignty.",summary_es:"Nuakchot ha solicitado formalmente una revisión del marco de cooperación migratoria con la UE de 2024, señalando incomodidad con el componente de infraestructura de vigilancia.",source:"Al Jazeera Arabic / AMI"},
+  {id:7,date:"2026-04-15",country:"Tunisia",theme:"Politics",priority:"low",signal:"Domestic development",title_en:"Saied government dissolves two additional opposition-linked trade unions under anti-terrorism framework",title_es:"El gobierno de Saied disuelve dos sindicatos adicionales vinculados a la oposición bajo el marco antiterrorista",summary_en:"The Tunisian presidency used emergency decree powers to dissolve two professional associations with ties to the banned Ennahda movement, continuing the systematic dismantling of organized civil society.",summary_es:"La presidencia tunecina utilizó poderes de decreto de emergencia para disolver dos asociaciones profesionales con vínculos con el movimiento Ennahda prohibido.",source:"Mosaique FM / Orient XXI"},
+  {id:8,date:"2026-04-12",country:"Morocco",theme:"Sovereignty",priority:"low",signal:"Diplomatic recognition",title_en:"Three additional African states open consulates in Laayoune, bringing total to 31",title_es:"Tres estados africanos adicionales abren consulados en El Aaiún, elevando el total a 31",summary_en:"Burundi, Togo and Guinea-Bissau opened diplomatic missions in Laayoune, part of Morocco's sustained campaign to consolidate African recognition of its Western Sahara claim ahead of UN review cycles.",summary_es:"Burundi, Togo y Guinea-Bisáu abrieron misiones diplomáticas en El Aaiún, parte de la campaña sostenida de Marruecos para consolidar el reconocimiento africano de su reclamación sobre el Sáhara Occidental.",source:"Morocco World News / MAP"},
+  {id:9,date:"2026-04-10",country:"Algeria",theme:"Diplomacy",priority:"low",signal:"Multilateral move",title_en:"Algeria pushes for African Union mediation role in Western Sahara, bypassing UN framework",title_es:"Argelia impulsa un papel mediador de la Unión Africana en el Sáhara Occidental, evitando el marco de la ONU",summary_en:"Algerian FM Attaf used the AU extraordinary summit to argue for a continental mediation track, a move that would elevate the Polisario's standing and sideline the UN-led Staffan de Mistura process.",summary_es:"El canciller argelino Attaf utilizó la cumbre extraordinaria de la UA para defender una vía de mediación continental, un movimiento que elevaría la posición del Polisario y marginaría el proceso de la ONU.",source:"Al Jazeera Arabic / Jeune Afrique"}
+];
+
+let lang='en';
+let expandedId=null;
+let analysisCache={};
+const HAS_API=typeof API_ENABLED!=='undefined'&&API_ENABLED;
+
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.textContent===l.toUpperCase()));
+  const t={
+    en:{title:'Western Mediterranean Monitor',sub:'Strategic intelligence — Maghreb & Western Mediterranean',inputTitle:'Analyze a new item',inputSub:'Paste any news item, statement, or development — the system will structure and assess it.',analyzeBtn:'Run analysis',clearBtn:'Clear',footer:'AI-assisted · human-curated',
+    heroText:'MedWatch Maghreb tracks <strong>political, security, and energy developments</strong> across Morocco, Algeria, Tunisia, Mauritania, and the broader Sahel — with a focus on their implications for Spain and the Western Mediterranean. Items are curated from Arabic, French, Spanish, and English sources, structured by theme and priority, and assessed through <strong>on-demand AI analysis</strong> covering strategic significance, key actors, 30-day watch items, and the Spain angle.'},
+    es:{title:'Monitor del Mediterráneo Occidental',sub:'Inteligencia estratégica — Magreb y Mediterráneo Occidental',inputTitle:'Analizar un nuevo ítem',inputSub:'Pega cualquier noticia, declaración o desarrollo — el sistema lo estructurará y evaluará.',analyzeBtn:'Ejecutar análisis',clearBtn:'Limpiar',footer:'Asistido por IA · curación humana',
+    heroText:'MedWatch Maghreb hace seguimiento de <strong>desarrollos políticos, de seguridad y energéticos</strong> en Marruecos, Argelia, Túnez, Mauritania y el Sahel — con foco en sus implicaciones para España y el Mediterráneo Occidental. Los ítems se curan en árabe, francés, español e inglés, se estructuran por tema y prioridad, y se evalúan mediante <strong>análisis IA bajo demanda</strong> que cubre relevancia estratégica, actores clave, seguimiento a 30 días y el ángulo español.'}
+  };
+  document.getElementById('brand-title').textContent=t[l].title;
+  document.getElementById('brand-sub').textContent=t[l].sub;
+  document.getElementById('input-title').textContent=t[l].inputTitle;
+  document.getElementById('input-sub').textContent=t[l].inputSub;
+  document.getElementById('analyze-btn').textContent=t[l].analyzeBtn;
+  document.getElementById('clear-btn').textContent=t[l].clearBtn;
+  document.getElementById('footer-right').innerHTML=t[l].footer+' · <a href="mailto:samuel.herize@alumni.unav.es">Contact</a>';
+  document.getElementById('hero-text').innerHTML=t[l].heroText;
+  document.querySelectorAll('[data-en]').forEach(el=>{if(el.dataset[l])el.textContent=el.dataset[l]});
+  document.getElementById('f-country').options[0].text=l==='en'?'All':'Todos';
+  document.getElementById('f-theme').options[0].text=l==='en'?'All':'Todos';
+  document.getElementById('f-priority').options[0].text=l==='en'?'All':'Todos';
+  document.getElementById('custom-input').placeholder=l==='en'?'Paste text here...':'Pega el texto aquí...';
+  renderFeed();
+}
+
+function dot(p){
+  const c=p==='high'?'dot-high':p==='medium'?'dot-med':'dot-low';
+  return `<span class="signal-dot ${c}"></span>`;
+}
+
+function renderFeed(){
+  const fc=document.getElementById('f-country').value;
+  const ft=document.getElementById('f-theme').value;
+  const fp=document.getElementById('f-priority').value;
+  const filtered=ITEMS.filter(i=>(fc==='all'||i.country===fc)&&(ft==='all'||i.theme===ft)&&(fp==='all'||i.priority===fp));
+  const feed=document.getElementById('feed');
+  if(!filtered.length){
+    feed.innerHTML=`<div class="empty-state">${lang==='en'?'No items match the current filters.':'Ningún ítem coincide con los filtros actuales.'}</div>`;
+    return;
+  }
+  feed.innerHTML=filtered.map(item=>{
+    const isExp=expandedId===item.id;
+    const title=lang==='en'?item.title_en:item.title_es;
+    const summary=lang==='en'?item.summary_en:item.summary_es;
+    const dateStr=new Date(item.date).toLocaleDateString(lang==='en'?'en-GB':'es-ES',{day:'numeric',month:'short',year:'numeric'});
+    const highLabel=lang==='en'?'High priority':'Alta prioridad';
+    const expandLabel=lang==='en'?(isExp?'Collapse ↑':'AI analysis ↓'):(isExp?'Contraer ↑':'Análisis IA ↓');
+    return `<div class="card${isExp?' expanded':''}" id="card-${item.id}">
+      <div class="card-header" onclick="toggleCard(${item.id})">
+        <div class="card-left">
+          <div class="card-title">${title}</div>
+          <div class="tags">
+            <span class="tag tag-country">${item.country}</span>
+            <span class="tag tag-theme">${item.theme}</span>
+            <span class="tag tag-signal">${item.signal}</span>
+            ${item.priority==='high'?`<span class="tag tag-high">${highLabel}</span>`:''}
+          </div>
+          <div class="card-meta">${dot(item.priority)}${dateStr} · ${item.source}</div>
+        </div>
+        <button class="expand-btn">${expandLabel}</button>
+      </div>
+      <div class="card-summary">${summary}</div>
+      ${isExp?`<div class="analysis-panel" id="analysis-${item.id}"><div class="analysis-loading">${lang==='en'?'Running AI analysis...':'Ejecutando análisis IA...'}</div></div>`:''}
+    </div>`;
+  }).join('');
+  if(expandedId!==null){
+    const item=ITEMS.find(i=>i.id===expandedId);
+    if(item)runAnalysis(item);
+  }
+}
+
+function toggleCard(id){
+  expandedId=expandedId===id?null:id;
+  renderFeed();
+}
+
+async function runAnalysis(item){
+  const panelId=`analysis-${item.id}`;
+  if(analysisCache[item.id]){
+    const p=document.getElementById(panelId);
+    if(p)p.innerHTML=analysisCache[item.id];
+    return;
+  }
+  if(!HAS_API){
+    const notice=lang==='en'
+      ?'<div class="no-api-notice">AI analysis requires an API key. When configured, each card shows a four-block structured assessment: Strategic Significance, Key Actors, 30-day Watch, and Spain Angle.</div>'
+      :'<div class="no-api-notice">El análisis IA requiere clave API. Cuando esté configurado, cada ítem mostrará una evaluación estructurada en cuatro bloques: Relevancia Estratégica, Actores Clave, Seguimiento a 30 días y Ángulo Español.</div>';
+    const p=document.getElementById(panelId);
+    if(p)p.innerHTML=notice;
+    return;
+  }
+  try{
+    const prompt=`You are a strategic intelligence analyst specializing in the Maghreb and Western Mediterranean. Analyze this item and respond in ${lang==='en'?'English':'Spanish'} with EXACTLY this structure:\nSTRATEGIC SIGNIFICANCE: [2 sentences]\nKEY ACTORS: [who is acting and their interest]\nWATCH: [one development to monitor in 30 days]\nSPAIN ANGLE: [relevance to Spanish foreign policy]\n\nItem: ${item.title_en}\nSummary: ${item.summary_en}\nCountry: ${item.country} | Theme: ${item.theme} | Signal: ${item.signal}`;
+    const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,lang})});
+    const data=await res.json();
+    const text=data.text||'';
+    const html=formatAnalysis(text,lang);
+    analysisCache[item.id]=html;
+    const p=document.getElementById(panelId);
+    if(p)p.innerHTML=html;
+  }catch(e){
+    const p=document.getElementById(panelId);
+    if(p)p.innerHTML=`<div class="no-api-notice">${lang==='en'?'Analysis unavailable.':'Análisis no disponible.'}</div>`;
+  }
+}
+
+function formatAnalysis(text,l){
+  const sections_en=['STRATEGIC SIGNIFICANCE','KEY ACTORS','WATCH','SPAIN ANGLE'];
+  const sections_es=['RELEVANCIA ESTRATÉGICA','ACTORES CLAVE','SEGUIMIENTO','ÁNGULO ESPAÑOL'];
+  const keys=sections_en;
+  const labels=l==='es'?sections_es:sections_en;
+  // Wide blocks (full width): indices 0 and 3; narrow: 1 and 2
+  const wide=[0,3];
+  const parts=[];
+  keys.forEach((sec,i)=>{
+    const regex=new RegExp(sec+':\\s*([\\s\\S]*?)(?=(?:'+keys.join('|')+'):|$)');
+    const match=text.match(regex);
+    if(match) parts.push({label:labels[i],text:match[1].trim(),wide:wide.includes(i)});
+  });
+  if(!parts.length) return `<div class="a-text">${text}</div>`;
+  let html='<div class="a-grid">';
+  parts.forEach(p=>{
+    html+=`<div class="a-block${p.wide?' a-block-wide':''}"><div class="a-label">${p.label}</div><div class="a-text">${p.text}</div></div>`;
+  });
+  html+='</div>';
+  return html;
+}
+
+async function analyzeCustom(){
+  const text=document.getElementById('custom-input').value.trim();
+  if(!text)return;
+  const result=document.getElementById('custom-result');
+  result.style.display='block';
+  result.innerHTML=`<div class="analysis-loading">${lang==='en'?'Running analysis...':'Ejecutando análisis...'}</div>`;
+  if(!HAS_API){
+    result.innerHTML=`<div class="no-api-notice">${lang==='en'?'AI analysis requires the API key to be configured. Once set up, paste any text here to receive a structured intelligence assessment.':'El análisis IA requiere que la clave API esté configurada. Una vez configurado, pega cualquier texto aquí para recibir una evaluación de inteligencia estructurada.'}</div>`;
+    return;
+  }
+  try{
+    const prompt=`You are a strategic intelligence analyst specializing in the Maghreb and Western Mediterranean. Analyze the following text and respond in ${lang==='en'?'English':'Spanish'} with EXACTLY this structure:\nCOUNTRY/REGION: [identify primary country or region]\nTHEME: [Security/Energy/Migration/Sovereignty/Diplomacy/Politics]\nSIGNAL TYPE: [what kind of development this is]\nPRIORITY: [High/Medium/Low — one-line justification]\nSTRATEGIC SIGNIFICANCE: [2-3 sentences]\nSPAIN ANGLE: [relevance to Spanish interests if any]\n\nTEXT: ${text}`;
+    const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,lang})});
+    const data=await res.json();
+    const raw=data.text||'';
+    const sections=['COUNTRY/REGION','THEME','SIGNAL TYPE','PRIORITY','STRATEGIC SIGNIFICANCE','SPAIN ANGLE'];
+    const sections_es=['PAÍS/REGIÓN','TEMA','TIPO DE SEÑAL','PRIORIDAD','RELEVANCIA ESTRATÉGICA','ÁNGULO ESPAÑOL'];
+    const labels=lang==='es'?sections_es:sections;
+    const wideIdx=[4,5];
+    const parts=[];
+    sections.forEach((sec,i)=>{
+      const regex=new RegExp(sec+':\\s*([\\s\\S]*?)(?=(?:'+sections.join('|')+'):|$)');
+      const match=raw.match(regex);
+      if(match) parts.push({label:labels[i],text:match[1].trim(),wide:wideIdx.includes(i)});
+    });
+    let html='';
+    if(parts.length){
+      html='<div class="a-grid">';
+      parts.forEach(p=>{html+=`<div class="a-block${p.wide?' a-block-wide':''}"><div class="a-label">${p.label}</div><div class="a-text">${p.text}</div></div>`;});
+      html+='</div>';
+    } else {
+      html=`<div class="a-text">${raw}</div>`;
+    }
+    result.innerHTML=html;
+  }catch(e){
+    result.innerHTML=`<div class="no-api-notice">${lang==='en'?'Analysis failed.':'Análisis fallido.'}</div>`;
+  }
+}
+
+function clearCustom(){
+  document.getElementById('custom-input').value='';
+  const r=document.getElementById('custom-result');
+  r.style.display='none';r.innerHTML='';
+}
+
+renderFeed();
+</script>
+</body>
+</html>
